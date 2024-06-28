@@ -8,10 +8,16 @@ from utils_wgbs import delete_or_skip, splitextgz, trim_to_uint8, validate_file_
                        eprint, load_dict_section
 
 
-def load_bed(bed_path, nrows, add1=False):
+def load_bed(bed_path, nrows, bedgraph=False, add1=False):
     # check if there is a header:
     peek_df = pd.read_csv(bed_path, sep='\t', nrows=1, header=None)
     header = None if str(peek_df.iloc[0, 1]).isdigit() else 0
+    
+    if bedgraph:
+        usecols = [0, 1, 4, 5]
+    else:
+        usecols = [0, 1, 3, 4]
+
     df = pd.read_csv(bed_path, sep='\t', header=header,
                      names=['chr', 'start', 'meth', 'total'],
                      usecols=[0, 1, 3, 4], nrows=nrows)
@@ -67,6 +73,8 @@ def parse_args():
     parser.add_argument('--outdir', '-o', default='.',
                         help='Output directory. Default is current directory [.]')
     parser.add_argument('--genome', help='Genome reference name.')
+    parser.add_argument('--coveragefile', action='store_true',
+                        help="Read from bedgraph, i.e. Bismark's .cov file, or MethylDackal's .bedgraph")
     args = parser.parse_args()
     return args
 
