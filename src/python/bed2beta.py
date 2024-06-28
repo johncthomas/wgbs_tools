@@ -8,19 +8,24 @@ from utils_wgbs import delete_or_skip, splitextgz, trim_to_uint8, validate_file_
                        eprint, load_dict_section
 
 
-def load_bed(bed_path, nrows, bedgraph=False, add1=False):
-    # check if there is a header:
-    peek_df = pd.read_csv(bed_path, sep='\t', nrows=1, header=None)
-    header = None if str(peek_df.iloc[0, 1]).isdigit() else 0
-    
+def load_bed(bed_path, nrows, add1=False, bedgraph=False):
+    """Load .bed, .cov or .bedgraph. Expected cov or bedgraph format
+    as used by Bismark and others."""
+
     if bedgraph:
         usecols = [0, 1, 4, 5]
+        skip=1
+        header=None
     else:
+        # check if there is a header:
+        peek_df = pd.read_csv(bed_path, sep='\t', nrows=1, header=None)
+        header = None if str(peek_df.iloc[0, 1]).isdigit() else 0
         usecols = [0, 1, 3, 4]
+        skip=0
 
     df = pd.read_csv(bed_path, sep='\t', header=header,
                      names=['chr', 'start', 'meth', 'total'],
-                     usecols=[0, 1, 3, 4], nrows=nrows)
+                     usecols=usecols, nrows=nrows, skiprows=skip)
     nr_lines = df.shape[0]
     df.drop_duplicates(subset=['chr', 'start'], inplace=True)
     nr_dup_lines = nr_lines - df.shape[0]
@@ -49,7 +54,7 @@ def bed2betas(args):
             # Load dict (at most once) and bed
             if rf is None:
                 rf = load_dict_section(region, args.genome)
-            df = load_bed(bed, nrows, args.add_one)
+            df = load_bed(bed, nrows, add1=args.add_one, bedgraph=args.coveragefile)
 
             # todo: implement in C++.
             # merge dict with bed, then dump
