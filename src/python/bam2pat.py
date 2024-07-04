@@ -201,8 +201,11 @@ def validate_bam(bam):
 
     # validate bam path:
     eprint('[wt bam2pat] bam:', bam)
-    if not (op.isfile(bam) and bam.endswith(('.bam', '.cram'))):
-        eprint(f'[wt bam2pat] Invalid bam: {bam}')
+    if not op.isfile(bam):
+        eprint(f'[wt bam2pat] File not found: {bam}')
+        return False
+    elif bam.endswith(('.bam', '.cram')):
+        eprint(f'[wt bam2pat] File must end with .bam or .cram: {bam}')
         return False
     return True
 
